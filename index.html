@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Background Master</title>
+    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@latest/dist/index.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; text-align: center; padding: 20px; }
+        .card { background: white; max-width: 500px; margin: auto; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .upload-btn { background: #4f46e5; color: white; padding: 15px; border-radius: 10px; cursor: pointer; display: block; margin: 20px 0; font-weight: bold; }
+        #preview-canvas { max-width: 100%; border-radius: 10px; display: none; margin-top: 20px; background: #ddd; }
+        .loader { display: none; border: 4px solid #f3f3f3; border-top: 4px solid #4f46e5; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 15px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .colors { display: none; margin: 20px 0; gap: 10px; justify-content: center; }
+        .color-dot { width: 35px; height: 35px; border-radius: 50%; cursor: pointer; border: 2px solid #ddd; }
+        .download-btn { display: none; background: #10b981; color: white; padding: 12px; width: 100%; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>✨ AI Photo Studio</h2>
+    <p style="color:#666;">Upload karein aur 10 seconds wait karein</p>
+
+    <label class="upload-btn">
+        Upload Photo
+        <input type="file" id="fileInp" accept="image/*" hidden>
+    </label>
+
+    <div class="loader" id="loader"></div>
+    <p id="status" style="color:#4f46e5; font-weight:bold; display:none;">AI is working... (15-20 sec wait)</p>
+
+    <canvas id="preview-canvas"></canvas>
+
+    <div class="colors" id="color-tools">
+        <div class="color-dot" style="background:#ffffff;" onclick="setBg('#ffffff')"></div>
+        <div class="color-dot" style="background:#3b82f6;" onclick="setBg('#3b82f6')"></div>
+        <input type="color" onchange="setBg(this.value)" style="width:35px; height:35px; padding:0; border:none; cursor:pointer;">
+    </div>
+
+    <button class="download-btn" id="dl-btn" onclick="download()">Download Photo</button>
+</div>
+
+<script>
+    const fileInp = document.getElementById('fileInp');
+    const canvas = document.getElementById('preview-canvas');
+    const ctx = canvas.getContext('2d');
+    const loader = document.getElementById('loader');
+    const status = document.getElementById('status');
+    let processedImg = new Image();
+    let bgColor = 'transparent';
+
+    fileInp.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        loader.style.display = 'block';
+        status.style.display = 'block';
+        
+        try {
+            // AI processing
+            const blob = await imglyConfig.removeBackground(file);
+            processedImg.src = URL.createObjectURL(blob);
+            processedImg.onload = () => {
+                canvas.style.display = 'block';
+                document.getElementById('color-tools').style.display = 'flex';
+                document.getElementById('dl-btn').style.display = 'block';
+                loader.style.display = 'none';
+                status.style.display = 'none';
+                render();
+            };
+        } catch (err) {
+            alert("Error: Internet check karein.");
+            loader.style.display = 'none';
+            status.style.display = 'none';
+        }
+    };
+
+    function setBg(color) { bgColor = color; render(); }
+
+    function render() {
+        canvas.width = processedImg.width;
+        canvas.height = processedImg.height;
+        if(bgColor !== 'transparent') {
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        ctx.drawImage(processedImg, 0, 0);
+    }
+
+    function download() {
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = 'ai-photo.png';
+        a.click();
+    }
+</script>
+
+</body>
+</html>
